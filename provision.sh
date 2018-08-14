@@ -22,6 +22,8 @@ sudo apt-get install -y php-fpm php-mysql
 
 # uncomment cgi.fix_path_info and set it to false
 sed -Ein 's/^;(cgi\.fix_pathinfo).*/\1=0/' /etc/php/7.0/fpm/php.ini
+sed -Ein 's/^(error_reporting).*/\1 = E_ALL/' /etc/php/7.0/fpm/php.ini
+sed -Ein 's/^(display_errors).*/\1 = On/' /etc/php/7.0/fpm/php.ini
 
 # change out nginx configuration and link.
 rm -f /etc/nginx/sites-available/default
