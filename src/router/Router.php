@@ -21,6 +21,9 @@ class Router
     /**
      * Executes the route specified by the $uri and the $request_type, echoing
      * the returned result.
+     *
+     * If the route specified by the request uri does not exist, then the
+     * Router returns 404.
      */
     public static function route()
     {
@@ -28,7 +31,10 @@ class Router
 
         $request_name = strtolower($_SERVER['REQUEST_METHOD']);
 
-        echo self::${$request_name}[$uri]($uri);
+        if (isset(self::${$request_name}[$uri]))
+            echo self::${$request_name}[$uri]($uri);
+
+        else echo '404';
     }
 
     /**

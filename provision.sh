@@ -1,10 +1,6 @@
 #!/bin/bash
 #
 # provision.sh
-#
-# Unlike other source files in this repository, this file uses tabs instead of
-# spaces. The reason is because bash scripts rely on tabs characters for
-# certain formating tricks to work (looking at you '<<-').
 
 # force exit on error so that we don't waste time if something goes wrong.
 set -e
@@ -20,12 +16,12 @@ apt-get install -y nginx mysql-server
 # installing php 7.0 for now, we'll deal with the remi repository later
 sudo apt-get install -y php-fpm php-mysql
 
-# uncomment cgi.fix_path_info and set it to false
+# setup php.ini the way we need/want it
 sed -Ein 's/^;(cgi\.fix_pathinfo).*/\1=0/' /etc/php/7.0/fpm/php.ini
 sed -Ein 's/^(error_reporting).*/\1 = E_ALL/' /etc/php/7.0/fpm/php.ini
 sed -Ein 's/^(display_errors).*/\1 = On/' /etc/php/7.0/fpm/php.ini
 
-# change out nginx configuration and link.
+# setup symbolic link between project nginx-config and actual nginx config.
 rm -f /etc/nginx/sites-available/default
 ln -s /vagrant/nginx-config /etc/nginx/sites-available/default
 service nginx reload
