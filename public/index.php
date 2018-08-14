@@ -17,4 +17,4 @@ Router::get('/', function () {
     return 'hello!';
 });
 
-Router::route($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
+Router::route();

@@ -21,16 +21,12 @@ class Router
     /**
      * Executes the route specified by the $uri and the $request_type, echoing
      * the returned result.
-     *
-     * We should probably use the $_SERVER vars directly, instead of asking for
-     * them to be passed in by the caller.
-     *
-     * @param  string $uri
-     * @param  string $request_type
      */
-    public static function route($uri, $request_type)
+    public static function route()
     {
-        $request_name = strtolower($request_type);
+        $uri = $_SERVER['REQUEST_URI'];
+
+        $request_name = strtolower($_SERVER['REQUEST_METHOD']);
 
         echo self::${$request_name}[$uri]($uri);
     }
