@@ -23,8 +23,9 @@ sudo apt-get install -y php-fpm php-mysql
 # uncomment cgi.fix_path_info and set it to false
 sed -Ein 's/^;(cgi\.fix_pathinfo).*/\1=0/' /etc/php/7.0/fpm/php.ini
 
-# change out nginx configuration
-cp /vagrant/nginx-config /etc/nginx/sites-available/default
+# change out nginx configuration and link.
+rm -f /etc/nginx/sites-available/default
+ln -s /vagrant/nginx-config /etc/nginx/sites-available/default
 service nginx reload
 
 # setup symbolic link between /vagrant and /var/www (or whatever our
