@@ -2,10 +2,19 @@
 
 require_once '../bootstrap/bootstrap.php';
 
-echo '<pre>';
-// var_dump($_SERVER['REQUEST_URI']);
-
 /*
-3. Routing
-4. Views
+TODO:
+    1. Routing
+    2. Views (External library?)
  */
+
+echo '<pre>';
+// var_dump($_SERVER);
+
+use Router\Router;
+
+Router::get('/', function () {
+    return 'hello!';
+});
+
+Router::route($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

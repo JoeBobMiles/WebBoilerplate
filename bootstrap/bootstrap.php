@@ -17,7 +17,7 @@ function dd (...$params) {
 // Autoloader function
 spl_autoload_register(function ($classname) {
 
-    $bits = explode('/', $classname);
+    $bits = explode('\\', $classname);
 
     $filename = end($bits).'.php';
 
@@ -33,7 +33,7 @@ spl_autoload_register(function ($classname) {
         $full_path = "../src/{$path}/{$filename}";
 
     else $full_path = "../src/{$filename}";
-
+    
 
     if (file_exists($full_path)) {
         require_once $full_path;
