@@ -14,10 +14,13 @@ echo '<pre>';
 use Router\Router;
 use Mustache\Mustache;
 
+/*
+Let's render our example Mustache template with some example Mustache data!
+ */
 Router::get('/', function () {
     return (new Mustache)
     ->render(
-        'example', 
+        'example',
         [
             'name' => 'John Doe',
             'value' => 1000000,
