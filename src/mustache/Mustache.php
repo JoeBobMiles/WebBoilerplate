@@ -38,40 +38,22 @@ class Mustache
 
         foreach ($lines as &$line) {
 
-            /*
-            TODO: Figure out how to hand skipping sections. Once we've figured
-            out how to do that, we can figure out how to fill out the inside of
-            them.
-             */
-
-            // This causes us to skip the check that would set $skip to false.
-            // if ($skip) continue;
-
             preg_match_all('/{{(.+?)}}/', $line, $matches);
 
             foreach ($matches[1] as $match) {
 
-                // Check for section begin tag
-                if (preg_match('/^#/', $match)) {
-                    echo 'section begin.';
-                    $skip = true;
+                // Check for section tags
+                if (preg_match('/^[#\/]/', $match)) {
+                    $line = '';
+
+                    // I know this looks like it can be reduced, but it can't.
+                    // Reducing the below expression breaks it.
+                    $skip = !$skip && !isset($data[trim($match,'#/')]);
+
+                    if ($skip) continue;
                 }
 
-                // Check for section end tag
-                else if (preg_match('/^\//', $match)) {
-                    echo 'section end.';
-                    $skip = false;
-                }
-
-                // This doesn't skip the check, and seems promising, besides
-                // the fact that the end-section tag get's left behind as a
-                // blank line.
-                if ($skip) continue;
-
-                // Check for escape tag
-
-                // Normal tag
-                else {
+                if (!$skip) {
                     $match = addslashes($match);
 
                     $line = str_replace(
@@ -80,10 +62,13 @@ class Mustache
                                 $line
                             );
                 }
+
+                else $line = '';
             }
         }
 
-        // Free the reference so that we can use it later if need be.
+        // Free the reference so that we can use $line else where without
+        // incident.
         unset($line);
 
         return implode($lines);
