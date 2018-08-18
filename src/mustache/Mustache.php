@@ -38,7 +38,21 @@ class Mustache
 
         foreach ($lines as &$line) {
 
-            preg_match_all('/{{(.+?)}}/', $line, $matches);
+            preg_match_all('/{{(.+?[}]?)}}/', $line, $matches);
+
+            /*
+            TODO:
+                1. Sections whose name match an index whose value is an array
+                    or other iterable need to iterate over the contents of
+                    said iterable, using what is between the tags as the new
+                    template.
+                2. Data elements that are callable need to be called and given
+                    parameters that allow them to do interesting things like
+                    add bold tags to the text they are given.
+                3. Inverted sections (sections that are executed if an index
+                    is _not_ in the array, or has a false value).
+                4. Partials (injection of templates into templates).
+             */
 
             foreach ($matches[1] as $match) {
 
@@ -46,21 +60,20 @@ class Mustache
                 if (preg_match('/^[#\/]/', $match)) {
                     $line = '';
 
-                    // I know this looks like it can be reduced, but it can't.
-                    // Reducing the below expression breaks it.
-                    $skip = !$skip && !isset($data[trim($match,'#/')]);
+                    $skip = !$skip && !($data[trim($match, '#/')] ?? 0);
 
                     if ($skip) continue;
                 }
 
                 if (!$skip) {
-                    $match = addslashes($match);
+                    $scrubbed_match = addslashes(trim($match, '&{} '));
 
-                    $line = str_replace(
-                                "{{{$match}}}",
-                                $data[$match] ?? '',
-                                $line
-                            );
+                    $replacement = $data[$scrubbed_match] ?? '';
+
+                    if (!preg_match('/{.+?}|^&/', $match))
+                        $replacement = htmlspecialchars($replacement);
+
+                    $line = str_replace("{{".$match."}}", $replacement, $line);
                 }
 
                 else $line = '';

@@ -4,8 +4,7 @@ require_once '../bootstrap/bootstrap.php';
 
 /*
 TODO:
-    1. Routing
-    2. Views (External library?)
+    1. Views
  */
 
 echo '<pre>';
@@ -22,10 +21,10 @@ Router::get('/', function () {
     ->render(
         'example',
         [
-            'name' => 'John Doe',
+            'name' => '<b>John Doe</b>',
             'value' => 1000000,
             'taxed_value' => 1000000 - (1000000 * 0.4),
-            'in_ca' => true
+            'in_ca' => []
         ]
     );
 });
