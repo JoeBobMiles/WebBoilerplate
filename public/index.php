@@ -21,10 +21,10 @@ Router::get('/', function () {
     ->render(
         'example',
         [
-            'name' => '<b>John Doe</b>',
+            'name' => 'John Doe',
             'value' => 1000000,
             'taxed_value' => 1000000 - (1000000 * 0.4),
-            'in_ca' => []
+            'in_ca' => false
         ]
     );
 });

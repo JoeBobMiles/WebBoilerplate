@@ -1,0 +1,8 @@
+{{...}} => Escaped tag
+{{{...}}} => Unescaped tag
+{{&...}} => Unescaped tag
+{{#...}} => Section begin tag
+{{^...}} => Inverted section begin tag
+{{/...}} => Section end tag
+{{!...}} => Comment tag
+{{>...}} => Partial/Mix-in tag

@@ -28,62 +28,145 @@ class Mustache
         template name in such a manner as to allow for indexing into sub-
         directories.
         */
-        $path = "/var/www/templates/{$template}.template";
+        $path = "/var/www/templates/{$template}.tpl";
 
         $contents = file_get_contents($path);
+        
+        $tokens = $this->tokenize($contents);
 
-        $lines = explode("\n", $contents);
+        $this->parse($tokens);
 
-        $skip = false;
+        return $contents;
+    }
 
-        foreach ($lines as &$line) {
+    /**
+     * This splits the given template contents by the accepted Mustache tags
+     * and creates an array of tokens from the split segments.
+     * 
+     * @param  string $contents
+     * @return array
+     */
+    private function tokenize($contents)
+    {
+        $segments = preg_split(
+            '/({{.+?}?}})/',
+            $contents,
+            -1,
+            PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+        );
 
-            preg_match_all('/{{(.+?[}]?)}}/', $line, $matches);
+        $tokens = [];
+
+        foreach ($segments as $key => $segment) {
 
             /*
-            TODO:
-                1. Sections whose name match an index whose value is an array
-                    or other iterable need to iterate over the contents of
-                    said iterable, using what is between the tags as the new
-                    template.
-                2. Data elements that are callable need to be called and given
-                    parameters that allow them to do interesting things like
-                    add bold tags to the text they are given.
-                3. Inverted sections (sections that are executed if an index
-                    is _not_ in the array, or has a false value).
-                4. Partials (injection of templates into templates).
+            Match the partial tag ({{>...}}).
              */
+            if (preg_match('/{{>(.+?)}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_partial',
+                    /*
+                    We are going to need to perform some extra parsing in
+                    order to figure out which template is being referred to.
+                    Could be done here, or elsewhere.
+                    */
+                    'name' => $match[1],
+                    'segment' => $segment
+                ];
+            }
 
-            foreach ($matches[1] as $match) {
+            /*
+            Match the section begin tag ({{#...}}).
+             */
+            else if (preg_match('/{{#(.+?)}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_section_begin',
+                    'name' => $match[1],
+                    'segment' => $segment
+                ];
+            }
 
-                // Check for section tags
-                if (preg_match('/^[#\/]/', $match)) {
-                    $line = '';
+            /*
+            Match the inverted section tag ({{^...}})
+             */
+            else if (preg_match('/{{\^(.+?)}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_inverted_begin',
+                    'name' => $match[1],
+                    'segement' => $segment
+                ];
+            }
 
-                    $skip = !$skip && !($data[trim($match, '#/')] ?? 0);
+            /*
+            Match the end section tag ({{/...}})
+             */
+            else if (preg_match('/{{\/(.+?)}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_section_end',
+                    'name' => $match[1],
+                    'segment' => $segment
+                ];
+            }
 
-                    if ($skip) continue;
-                }
+            /*
+            Match the comment tag ({{!...}})
+             */
+            else if (preg_match('/{{!.+?}}/', $segment)) {
+                $tokens[$key] = [
+                    'type' => 'tag_comment',
+                    'segment' => $segment
+                ];
+            }
 
-                if (!$skip) {
-                    $scrubbed_match = addslashes(trim($match, '&{} '));
+            /*
+            Match the unescaped tags ({{{...}}} and {{&...}}).
+            Incidentally, this also treats the 'malformed' {{&...}}} as a valid
+            unescaped tag.
+             */
+            else if (preg_match('/{{[{&](.+?)}?}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_unescaped',
+                    'name' => $match[1],
+                    'segment' => $segment
+                ];
+            }
 
-                    $replacement = $data[$scrubbed_match] ?? '';
+            /*
+            Match the escaped tag.
+             */
+            else if (preg_match('/{{(.+?)}}/', $segment, $match)) {
+                $tokens[$key] = [
+                    'type' => 'tag_escaped', 
+                    'name' => $match[1],
+                    'segment' => $segment
+                ];
+            }
 
-                    if (!preg_match('/{.+?}|^&/', $match))
-                        $replacement = htmlspecialchars($replacement);
-
-                    $line = str_replace("{{".$match."}}", $replacement, $line);
-                }
-
-                else $line = '';
+            /*
+            Anything else that doesn't match the above patterns will be treated
+            as text for the sake of simplicity.
+             */
+            else {
+                $tokens[$key] = [
+                    'type' => 'text',
+                    'segment' => $segment
+                ];
             }
         }
 
-        // Free the reference so that we can use $line else where without
-        // incident.
-        unset($line);
+        return $tokens;
+    }
 
-        return implode($lines);
+    /**
+     * Parses the given tokens into contexts and readies them to be processed.
+     *
+     * @NOTE We may just process them here and return the compiled template.
+     * 
+     * @param  array  $tokens
+     * @return string
+     */
+    private function parse($tokens)
+    {
+        dd($tokens);
     }
 }
