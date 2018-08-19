@@ -34,7 +34,7 @@ class Mustache
         
         $tokens = $this->tokenize($contents);
 
-        $this->parse($tokens);
+        $this->parse($tokens, $data);
 
         return $contents;
     }
@@ -158,15 +158,59 @@ class Mustache
     }
 
     /**
-     * Parses the given tokens into contexts and readies them to be processed.
+     * Parses the given tokens into a syntax tree and then compiles the syntax
+     * tree into a finished product.
      *
-     * @NOTE We may just process them here and return the compiled template.
+     * @NOTE Compilation may have to be it's own function since this is 'parse',
+     * not 'parse and compile'.
      * 
      * @param  array  $tokens
+     * @param  array  $data
      * @return string
      */
-    private function parse($tokens)
-    {
-        dd($tokens);
+    private function parse($tokens, $data)
+    {   
+        // 1. Turn tokens into syntax tree.
+        $syntax_tree = [];
+        $sections = [];
+
+        foreach ($tokens as $token) {
+
+            /*
+            @TODO Figure out how to recursively generate contexts (create
+            contexts within contexts).
+             */
+
+            if ($token['type'] === 'tag_section_begin') {
+                array_push($sections, $token['name']);
+
+                $syntax_tree[end($sections)] = [
+                    'inverted' => false,
+                    'context' => []
+                ];
+            }
+
+            else if ($token['type'] === 'tag_inverted_begin') {
+                array_push($sections, $token['name']);
+
+                $syntax_tree[end($sections)] = [
+                    'inverted' => true,
+                    'context' => []
+                ];
+            }
+
+            else if ($token['type'] === 'tag_section_end')
+                array_pop($sections);
+
+            if (!empty($sections))
+                $syntax_tree[end($sections)]['context'] = $token;
+
+            else
+                $syntax_tree[] = $token;
+        }
+
+        dd($syntax_tree);
+
+        // 2. Compile syntax tree.
     }
 }
