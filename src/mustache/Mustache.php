@@ -4,14 +4,9 @@ namespace Mustache;
 
 class Mustache
 {
-    public function __construct()
-    {
-        //...
-    }
-
     /**
      * Renders the template with the given name with the given data.
-     * 
+     *
      * @param  string $template
      * @param  array  $data
      * @return string
@@ -31,18 +26,18 @@ class Mustache
         $path = "/var/www/templates/{$template}.tpl";
 
         $contents = file_get_contents($path);
-        
+
         $tokens = $this->tokenize($contents);
 
-        $this->parse($tokens, $data);
+        $syntax_tree = $this->parse($tokens);
 
-        return $contents;
+        return $this->compile($syntax_tree, $data);
     }
 
     /**
      * This splits the given template contents by the accepted Mustache tags
      * and creates an array of tokens from the split segments.
-     * 
+     *
      * @param  string $contents
      * @return array
      */
@@ -136,7 +131,7 @@ class Mustache
              */
             else if (preg_match('/{{(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
-                    'type' => 'tag_escaped', 
+                    'type' => 'tag_escaped',
                     'name' => $match[1],
                     'segment' => $segment
                 ];
@@ -158,59 +153,94 @@ class Mustache
     }
 
     /**
-     * Parses the given tokens into a syntax tree and then compiles the syntax
-     * tree into a finished product.
+     * Parses the given array of tokens into a syntax tree.
      *
-     * @NOTE Compilation may have to be it's own function since this is 'parse',
-     * not 'parse and compile'.
-     * 
      * @param  array  $tokens
-     * @param  array  $data
-     * @return string
+     * @return array
      */
-    private function parse($tokens, $data)
-    {   
-        // 1. Turn tokens into syntax tree.
+    private function parse($tokens)
+    {
         $syntax_tree = [];
-        $sections = [];
+        $section = null;
 
         foreach ($tokens as $token) {
 
-            /*
-            @TODO Figure out how to recursively generate contexts (create
-            contexts within contexts).
-             */
+            if ($token['type'] === 'tag_section_begin' && !$section) {
+                $section = $token['name'];
+                $syntax_tree[$section] = [];
 
-            if ($token['type'] === 'tag_section_begin') {
-                array_push($sections, $token['name']);
-
-                $syntax_tree[end($sections)] = [
-                    'inverted' => false,
-                    'context' => []
-                ];
+                continue;
             }
 
-            else if ($token['type'] === 'tag_inverted_begin') {
-                array_push($sections, $token['name']);
+            else if ($token['type'] === 'tag_inverted_begin' && !$section) {
+                $section = $token['name'];
+                $syntax_tree[$section] = [];
 
-                $syntax_tree[end($sections)] = [
-                    'inverted' => true,
-                    'context' => []
-                ];
+                continue;
             }
 
-            else if ($token['type'] === 'tag_section_end')
-                array_pop($sections);
+            else if ($token['type'] === 'tag_section_end' && 
+                     $token['name'] === $section)
+            {
+                $syntax_tree[$section] = $this->parse(
+                                            $syntax_tree[$section]
+                                        );
 
-            if (!empty($sections))
-                $syntax_tree[end($sections)]['context'] = $token;
+                $section = null;
+
+                continue;
+            }
+
+
+            if ($section)
+                $syntax_tree[$section][] = $token;
 
             else
                 $syntax_tree[] = $token;
         }
 
-        dd($syntax_tree);
+        return $syntax_tree;
+    }
 
-        // 2. Compile syntax tree.
+    /**
+     * Compiles the given syntax tree with the given data and returns the
+     * resultant string.
+     * 
+     * @param  array  $syntax_tree
+     * @param  array  $data        
+     * @return string
+     */
+    private function compile($syntax_tree, $data)
+    {
+        $segments = [];
+
+        foreach ($syntax_tree as $key => $node) {
+            if ($data[$key] ?? false)
+                $segments[] = $this->compile($node, $data);
+
+            else if (is_numeric($key)) {
+                if ($node['type'] === 'text') {
+                    // The first text segment in a section will annoyingly
+                    // have a leading newline due to how we tokenize. What this
+                    // means is that we have to left-trim the first text segment
+                    // to make sure there are no new lines that are upsetting
+                    // our formating.
+                    $segments[] = $key !== 0 
+                                    ? $node['segment']
+                                    : ltrim($node['segment']);
+                }
+
+                // It also seems that when we have a token immediately following
+                // an end-of-section tag, we need to trim the leading new line,
+                // but I have no idea how to do that.
+                else if ($node['type'] === 'tag_partial')
+                    $segments[] = $this->render($node['name'], $data);
+
+                else if ($node['type'] !== 'tag_comment')
+                    $segments[] = $data[$node['name']] ?? '';
+            }
+        }
+
+        return implode($segments);
     }
 }

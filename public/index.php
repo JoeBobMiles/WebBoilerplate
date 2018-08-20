@@ -24,7 +24,7 @@ Router::get('/', function () {
             'name' => 'John Doe',
             'value' => 1000000,
             'taxed_value' => 1000000 - (1000000 * 0.4),
-            'in_ca' => false
+            'in_ca' => true
         ]
     );
 });
