@@ -43,6 +43,16 @@ class Mustache
      */
     private function tokenize($contents)
     {
+
+        // Cleans up any trailing new lines after section and partial tags.
+        // We do this so that new lines that occur after unrendered tags don't
+        // get rendered either.
+        $contents = preg_replace(
+            '/({{[!>#^\/].+?}?}})[\n\r]{1,2}/',
+            '$1',
+            $contents
+        );
+
         $segments = preg_split(
             '/({{.+?}?}})/',
             $contents,
@@ -219,20 +229,9 @@ class Mustache
                 $segments[] = $this->compile($node, $data);
 
             else if (is_numeric($key)) {
-                if ($node['type'] === 'text') {
-                    // The first text segment in a section will annoyingly
-                    // have a leading newline due to how we tokenize. What this
-                    // means is that we have to left-trim the first text segment
-                    // to make sure there are no new lines that are upsetting
-                    // our formating.
-                    $segments[] = $key !== 0 
-                                    ? $node['segment']
-                                    : ltrim($node['segment']);
-                }
+                if ($node['type'] === 'text')
+                    $segments[] = $node['segment']; 
 
-                // It also seems that when we have a token immediately following
-                // an end-of-section tag, we need to trim the leading new line,
-                // but I have no idea how to do that.
                 else if ($node['type'] === 'tag_partial')
                     $segments[] = $this->render($node['name'], $data);
 
