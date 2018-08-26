@@ -22,6 +22,10 @@ class Mustache
         located in sub-directories and we should figure out how to parse the
         template name in such a manner as to allow for indexing into sub-
         directories.
+
+        I'm feeling like we should use the '.' notation that Laravel uses for
+        referencing it's Blade templates. Mostly because it's just so simple
+        and familiar (and we don't have to worry about dealing with slashes).
         */
         $path = "/var/www/templates/{$template}.tpl";
 
@@ -44,11 +48,18 @@ class Mustache
     private function tokenize($contents)
     {
 
-        // Cleans up any trailing new lines after section and partial tags.
-        // We do this so that new lines that occur after unrendered tags don't
-        // get rendered either.
+        /*
+        Cleans up any trailing new lines after section and partial tags.
+        We do this so that new lines that occur after unrendered tags don't
+        get rendered either.
+
+        The regex matches the following unrendered tags:
+         - The 'partial' tag,
+         - The section tags (start, inverted, end), and
+         - The comment tag
+        */
         $contents = preg_replace(
-            '/({{[!>#^\/].+?}?}})[\n\r]{1,2}/',
+            '/({{[!>#^\/].+?}})[\n\r]{1,2}/',
             '$1',
             $contents
         );
@@ -70,11 +81,6 @@ class Mustache
             if (preg_match('/{{>(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_partial',
-                    /*
-                    We are going to need to perform some extra parsing in
-                    order to figure out which template is being referred to.
-                    Could be done here, or elsewhere.
-                    */
                     'name' => $match[1],
                     'segment' => $segment
                 ];
@@ -174,17 +180,18 @@ class Mustache
         $section = null;
 
         foreach ($tokens as $token) {
-
             if ($token['type'] === 'tag_section_begin' && !$section) {
                 $section = $token['name'];
-                $syntax_tree[$section] = [];
+                $syntax_tree[$section]['inverted'] = false;
+                $syntax_tree[$section]['nodes'] = [];
 
                 continue;
             }
 
             else if ($token['type'] === 'tag_inverted_begin' && !$section) {
                 $section = $token['name'];
-                $syntax_tree[$section] = [];
+                $syntax_tree[$section]['inverted'] = true;
+                $syntax_tree[$section]['nodes'] = [];
 
                 continue;
             }
@@ -192,8 +199,8 @@ class Mustache
             else if ($token['type'] === 'tag_section_end' && 
                      $token['name'] === $section)
             {
-                $syntax_tree[$section] = $this->parse(
-                                            $syntax_tree[$section]
+                $syntax_tree[$section]['nodes'] = $this->parse(
+                                            $syntax_tree[$section]['nodes']
                                         );
 
                 $section = null;
@@ -203,7 +210,7 @@ class Mustache
 
 
             if ($section)
-                $syntax_tree[$section][] = $token;
+                $syntax_tree[$section]['nodes'][] = $token;
 
             else
                 $syntax_tree[] = $token;
@@ -224,9 +231,24 @@ class Mustache
     {
         $segments = [];
 
+        /*
+        @TODO We need to implement the ability to call a callable $data value,
+        as well as implement interating over interable $data values, and
+        navigating backwards through contexts (also need to implement
+        contexts).
+         */
+
         foreach ($syntax_tree as $key => $node) {
-            if ($data[$key] ?? false)
-                $segments[] = $this->compile($node, $data);
+            if (is_string($key)) {
+                // @NOTE Resist the urge to combine the if and else-if,
+                // they cannot be combined into a single boolean expression
+                // due to the nature of `$data[$key] ?? false`
+                if ($node['inverted'] && !($data[$key] ?? false))
+                    $segments[] = $this->compile($node['nodes'], $data);
+
+                else if ($data[$key] ?? false)
+                    $segments[] = $this->compile($node['nodes'], $data);
+            }
 
             else if (is_numeric($key)) {
                 if ($node['type'] === 'text')
