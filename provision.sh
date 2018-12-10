@@ -14,12 +14,14 @@ debconf-set-selections <<< "mysql-server mysql-server/root_password_again passwo
 apt-get install -y nginx mysql-server
 
 # installing php 7.0 for now, we'll deal with the remi repository later
-sudo apt-get install -y php-fpm php-mysql
+add-apt-repository -y ppa:ondrej/php
+apt-get update -y
+sudo apt-get install -y php7.2-fpm php7.2-mysql phpunit
 
 # setup php.ini the way we need/want it
-sed -Ein 's/^;(cgi\.fix_pathinfo).*/\1=0/' /etc/php/7.0/fpm/php.ini
-sed -Ein 's/^(error_reporting).*/\1=E_ALL/' /etc/php/7.0/fpm/php.ini
-sed -Ein 's/^(display_errors).*/\1=On/' /etc/php/7.0/fpm/php.ini
+sed -Ein 's/^;(cgi\.fix_pathinfo).*/\1=0/' /etc/php/7.2/fpm/php.ini
+sed -Ein 's/^(error_reporting).*/\1=E_ALL/' /etc/php/7.2/fpm/php.ini
+sed -Ein 's/^(display_errors).*/\1=On/' /etc/php/7.2/fpm/php.ini
 
 # setup symbolic link between project nginx-config and actual nginx config.
 rm -f /etc/nginx/sites-available/default
@@ -30,3 +32,7 @@ service nginx reload
 # target hosting directory is).
 rm -rf /var/www
 ln -s /vagrant /var/www
+
+# Install phpunit
+wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-7.phar
+chmod +x /usr/bin/phpunit
