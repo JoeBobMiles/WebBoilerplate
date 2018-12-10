@@ -30,10 +30,11 @@ spl_autoload_register(function ($classname) {
 
 
     if (count($bits) > 1)
-        $full_path = "../src/{$path}/{$filename}";
+        $full_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/{$path}/{$filename}";
 
-    else $full_path = "../src/{$filename}";
-    
+    else
+        $full_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/{$filename}";
+
 
     if (file_exists($full_path)) {
         require_once $full_path;
