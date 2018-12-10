@@ -196,7 +196,7 @@ class Mustache
                 continue;
             }
 
-            else if ($token['type'] === 'tag_section_end' && 
+            else if ($token['type'] === 'tag_section_end' &&
                      $token['name'] === $section)
             {
                 $syntax_tree[$section]['nodes'] = $this->parse(
@@ -222,9 +222,9 @@ class Mustache
     /**
      * Compiles the given syntax tree with the given data and returns the
      * resultant string.
-     * 
+     *
      * @param  array  $syntax_tree
-     * @param  array  $data        
+     * @param  array  $data
      * @return string
      */
     private function compile($syntax_tree, $data)
@@ -252,7 +252,7 @@ class Mustache
 
             else if (is_numeric($key)) {
                 if ($node['type'] === 'text')
-                    $segments[] = $node['segment']; 
+                    $segments[] = $node['segment'];
 
                 else if ($node['type'] === 'tag_partial')
                     $segments[] = $this->render($node['name'], $data);
