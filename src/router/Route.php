@@ -22,7 +22,15 @@ class Route
      */
     private $operation;
 
-    public function __construct($uri, $operation)
+    /**
+     * Creates a new instance of a Route
+     *
+     * @param   string      $uri       The URI this Route belongs to.
+     * @param   callable    $operation The operatoin to execute for the given URI.
+     *
+     * @return  Route
+     */
+    public function __construct(string $uri, callable $operation)
     {
         $this->uri = $uri;
         $this->operation = $operation;
@@ -36,7 +44,7 @@ class Route
      *
      * @return  mixed   Returns the result of the in built $operation.
      */
-    public function __invoke($request_uri)
+    public function __invoke(string $request_uri)
     {
         return call_user_func($this->operation, $request_uri);
     }

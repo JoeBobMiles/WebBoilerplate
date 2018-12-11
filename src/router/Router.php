@@ -55,7 +55,7 @@ class Router
      *
      * @return  Route   A new Route object.
      */
-    public static function get($uri, $operation)
+    public static function get(string $uri, callable $operation)
     {
         $route = new Route($uri, $operation);
 
@@ -73,7 +73,7 @@ class Router
      *
      * @return  Route   A new Route object.
      */
-    public static function post($uri, $operation)
+    public static function post(string $uri, callable $operation)
     {
         $route = new Route($uri, $operation);
 
