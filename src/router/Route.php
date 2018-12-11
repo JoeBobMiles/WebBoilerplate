@@ -1,4 +1,7 @@
 <?php
+/**
+ * @author Joseph Miles <josephmiles2015@gmail.com>
+ */
 
 namespace Router;
 
@@ -27,10 +30,11 @@ class Route
 
     /**
      * Executes this Route with the data from the given $request_uri, and
-     * returns the result of the Route's operation.
+     * returns the result of the Route's $operation.
      *
-     * @param  string $request_uri
-     * @return mixed
+     * @param   string  $request_uri
+     *
+     * @return  mixed   Returns the result of the in built $operation.
      */
     public function __invoke($request_uri)
     {

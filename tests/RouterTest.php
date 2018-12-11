@@ -1,56 +1,68 @@
 <?php
+/**
+ * @author Joseph Miles <josephmiles2015@gmail.com>
+ */
 
-// Include PHPUnit TestCase class.
 use PHPUnit\Framework\TestCase;
-
-// Include the Router class.
+use Router\Route;
 use Router\Router;
 
 class RouterTest extends TestCase
 {
     /**
-     * Tests that the Router class is a singleton.
+     * Tests that an instance of the Router class cannot be created.
+     *
+     * @return  void
      */
     public function testIsSingleton()
     {
-        /*
-        1. Cannot call constructor.
-        2. Cannot use clone.
-        3. Instances retreived from getInstance() are the same.
-         */
         return;
     }
 
     /**
-     * Tests to see if we can add GET routes to the Router and use them.
+     * Tests to see if we can add GET routes to the Router.
+     *
+     * @return  void
      */
     public function testCanRegisterGetRoutes()
     {
-        $router = new Router;
-
-        $callback = function () { echo "Hello World!" };
-
-        $router->get('/', $callback);
+        Router::get('/', function () { echo "Hello World!" });
 
         $this->assertTrue(array_key_exists('/', Router::$get));
-
-        // IDK if 'assertEquals' is the appropriate check for comparing
-        // Closures. We _could_ test the output of both Closures, which
-        // should be the same.
-        $this->assertEquals(Router::$get['/'], $callback);
+        $this->assertInstanceOf(Route::class, Router::$get['/']);
     }
 
+    /**
+     * Tests to see if we can add POST routes to the Router.\
+     *
+     * @return  void
+     */
     public function testCanRegisterPostRoutes()
     {
-        return;
+        Router::post('/', function () { echo "Hello World!"; });
+
+        $this->assertTrue(array_key_exists('/', Router::$post));
+        $this->assertInstanceOf(Route::class, Router::$get['/'])
     }
 
-    public function testCanRouteGet()
+    /**
+     * Test that when we call Router::route() with the request method of GET,
+     * we get the expected result.
+     *
+     * @return  void
+     */
+    public function testCanRouteGetRequest()
     {
         return;
     }
 
-    public function testCanRoutePost()
+    /**
+     * Test that when we call Router::route() with the request method of POST,
+     * we get the expected result.
+     *
+     * @return  void
+     */
+    public function testCanRoutePostRequest()
     {
         return;
     }

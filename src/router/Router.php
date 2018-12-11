@@ -1,4 +1,7 @@
 <?php
+/**
+ * @author Joseph Miles <josephmiles2015@gmail.com>
+ */
 
 namespace Router;
 
@@ -7,14 +10,14 @@ class Router
     /**
      * Stores the GET routes.
      *
-     * @var array
+     * @var callable[]
      */
     public static $get = [];
 
     /**
      * Stores the POST routes.
      *
-     * @var array
+     * @var callable[]
      */
     public static $post = [];
 
@@ -24,6 +27,8 @@ class Router
      *
      * If the route specified by the request uri does not exist, then the
      * Router returns 404.
+     *
+     * @return void
      */
     public static function route()
     {
@@ -45,8 +50,10 @@ class Router
      * so that we don't have to keep rewriting the same logic twice (or more
      * if we have other types of request functions).
      *
-     * @param string   $uri
-     * @param callable $operation
+     * @param   string      $uri        The URI to respond to.
+     * @param   callable    $operation  The operation to perform.
+     *
+     * @return  Route   A new Route object.
      */
     public static function get($uri, $operation)
     {
@@ -61,8 +68,10 @@ class Router
      * Takes the given uri and operation and adds them to the $post array,
      * with the uri as the key and the operation as the value.
      *
-     * @param string   $uri
-     * @param callable $operation
+     * @param   string   $uri       The URI to respond to.
+     * @param   callable $operation The operation to perform.
+     *
+     * @return  Route   A new Route object.
      */
     public static function post($uri, $operation)
     {
