@@ -10,6 +10,19 @@ use Router\Router;
 class RouterTest extends TestCase
 {
     /**
+     * Empties all routes from the Router to ensure that the results of
+     * the previous tests don't interfere with our current tests.
+     *
+     * @return void
+     *
+     * @before
+     */
+    public function clearRoutes()
+    {
+        Router::unregisterAll();
+    }
+
+    /**
      * Check to see if we can register a GET route to the Router.
      *
      * @return void

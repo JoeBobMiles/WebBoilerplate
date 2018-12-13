@@ -12,4 +12,25 @@ class Method
 {
     const GET  = 0;
     const POST = 1;
+
+    /**
+     * Converts an HTTP request method string to it's corresponding enum value.
+     *
+     * @param  string   $method_string
+     *
+     * @return integer|boolean
+     */
+    public static function convert($method_string)
+    {
+        switch (strtoupper($method_string)) {
+            case "GET":
+                return self::GET;
+
+            case "POST":
+                return self::POST;
+
+            default:
+                return false;
+        }
+    }
 }

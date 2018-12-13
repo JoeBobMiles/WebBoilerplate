@@ -81,12 +81,25 @@ class Router
      */
     public static function route($method_string, $uri)
     {
-        switch ($method_string) {
-            case "GET":
+        $method = HTTP\Method::convert($method_string);
+
+        switch ($method) {
+            case HTTP\Method::GET:
                 return self::$get[$uri]();
 
-            case "POST":
+            case HTTP\Method::POST:
                 return self::$post[$uri]();
         }
+    }
+
+    /**
+     * Removes all routes registered to the Router.
+     *
+     * @return void
+     */
+    public static function unregisterAll()
+    {
+        self::$get  = [];
+        self::$post = [];
     }
 }
