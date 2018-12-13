@@ -35,18 +35,21 @@ class Router
      * @param  string   $uri      The URI this route is mapped to.
      * @param  Closure  $callback What to do when this route is requested.
      *
-     * @return void
+     * @return boolean  Returns false if $method is not recognized.
      */
     public static function register($method, $uri, $callback)
     {
         switch ($method) {
             case HTTP\Method::GET:
                 self::$get[$uri] = $callback;
-                break;
+                return true;
 
             case HTTP\Method::POST:
                 self::$post[$uri] = $callback;
-                break;
+                return true;
+
+            default:
+                return false;
         }
     }
 
@@ -67,6 +70,9 @@ class Router
 
             case HTTP\Method::POST:
                 return isset(self::$post[$uri]);
+
+            default:
+                return false;
         }
     }
 
@@ -83,12 +89,28 @@ class Router
     {
         $method = HTTP\Method::convert($method_string);
 
+        /*
+        It may not be prudent to use false as an indication of error
+        here. Some routes may opt to return false to indicate error
+        themselves, and the ambiguity between the route not being
+        found and the route returning false could lead to issues down
+        the line.
+
+        What may be more ideal is returning "Bad Request" or "Not Found"
+        instead.
+
+        2018-12-13 Joseph Miles
+         */
+
         switch ($method) {
             case HTTP\Method::GET:
-                return self::$get[$uri]();
+                return self::$get[$uri]() ?? false;
 
             case HTTP\Method::POST:
-                return self::$post[$uri]();
+                return self::$post[$uri]() ?? false;
+
+            default:
+                return false;
         }
     }
 

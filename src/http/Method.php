@@ -10,8 +10,8 @@ namespace HTTP;
 
 class Method
 {
-    const GET  = 0;
-    const POST = 1;
+    const GET  = 1;
+    const POST = 2;
 
     /**
      * Converts an HTTP request method string to it's corresponding enum value.
