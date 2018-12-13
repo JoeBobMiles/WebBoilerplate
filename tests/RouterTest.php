@@ -4,66 +4,70 @@
  */
 
 use PHPUnit\Framework\TestCase;
-use Router\Route;
+use HTTP;
 use Router\Router;
 
 class RouterTest extends TestCase
 {
     /**
-     * Tests that an instance of the Router class cannot be created.
+     * Check to see if we can register a GET route to the Router.
      *
-     * @return  void
+     * @return void
      */
-    public function testIsSingleton()
+    public function testCanRegisterGetRoute()
     {
-        return;
+        Router::register(HTTP\Method::GET, '/', function () {
+            return "Hello World!";
+        });
+
+        $this->assertTrue(Router::has(HTTP\Method::GET, '/'));
     }
 
     /**
-     * Tests to see if we can add GET routes to the Router.
+     * Check to see if we can invoke a GET route after registering it
+     * with the Router.
      *
-     * @return  void
+     * @return void
      */
-    public function testCanRegisterGetRoutes()
+    public function testCanInvokeGetRoute()
     {
-        Router::get('/', function () { echo "Hello World!" });
+        $message = "Hello World!";
 
-        $this->assertTrue(array_key_exists('/', Router::$get));
-        $this->assertInstanceOf(Route::class, Router::$get['/']);
+        Router::register(HTTP\Method::GET, '/', function () use ($message) {
+            return $message;
+        });
+
+        $this->assertEquals($message, Router::route('GET', '/'));
     }
 
     /**
-     * Tests to see if we can add POST routes to the Router.\
+     * Check to see if we can register a POST route to the Router.
      *
-     * @return  void
+     * @return void
      */
-    public function testCanRegisterPostRoutes()
+    public function testCanRegisterPostRoute()
     {
-        Router::post('/', function () { echo "Hello World!"; });
+        Router::register(HTTP\Method::POST, '/', function () {
+            return "Hello World!";
+        });
 
-        $this->assertTrue(array_key_exists('/', Router::$post));
-        $this->assertInstanceOf(Route::class, Router::$get['/'])
+        $this->assertTrue(Router::has(HTTP\Method::POST, '/'));
     }
 
     /**
-     * Test that when we call Router::route() with the request method of GET,
-     * we get the expected result.
+     * Check to see if we can invoke a POST route we have registered with the
+     * Router.
      *
-     * @return  void
+     * @return void
      */
-    public function testCanRouteGetRequest()
+    public function testCanInvokePostRoute()
     {
-        return;
-    }
+        $message = "Hello World!";
 
-    /**
-     * Test that when we call Router::route() with the request method of POST,
-     * we get the expected result.
-     *
-     * @return  void
-     */
-    public function testCanRoutePostRequest()
-    {
-        return;
+        Router::register(HTTP\Method::POST, '/', function () use ($message) {
+            return $message;
+        });
+
+        $this->assertEquals($message, Router::route('POST', '/'));
     }
 }

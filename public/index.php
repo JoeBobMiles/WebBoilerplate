@@ -10,13 +10,14 @@ TODO:
 echo '<pre>';
 // var_dump($_SERVER);
 
+use HTTP;
 use Router\Router;
 use Mustache\Mustache;
 
 /*
 Let's render our example Mustache template with some example Mustache data!
  */
-Router::get('/', function () {
+Router::register(HTTP\Method::GET, '/', function () {
     return (new Mustache)
     ->render(
         'example',
@@ -29,4 +30,4 @@ Router::get('/', function () {
     );
 });
 
-Router::route();
+echo Router::route($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

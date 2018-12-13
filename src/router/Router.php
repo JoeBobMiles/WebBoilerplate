@@ -1,84 +1,92 @@
 <?php
 /**
  * @author Joseph Miles <josephmiles2015@gmail.com>
+ *
+ * This file declares the Router object, through which we create routes that
+ * allow us to declare custom URIs and actions for them.
  */
 
 namespace Router;
 
+use HTTP;
+
 class Router
 {
     /**
-     * Stores the GET routes.
+     * An array in which we store all of our routes that use the GET request
+     * method.
      *
-     * @var callable[]
+     * @var array
      */
-    public static $get = [];
+    private static $get = [];
 
     /**
-     * Stores the POST routes.
+     * An array in which we store all of our routes that use the POST request
+     * method.
      *
-     * @var callable[]
+     * @var array
      */
-    public static $post = [];
+    private static $post = [];
 
     /**
-     * Executes the route specified by the $uri and the $request_type, echoing
-     * the returned result.
+     * Register a new route.
      *
-     * If the route specified by the request uri does not exist, then the
-     * Router returns 404.
+     * @param  integer  $method   The request method type
+     * @param  string   $uri      The URI this route is mapped to.
+     * @param  Closure  $callback What to do when this route is requested.
      *
      * @return void
      */
-    public static function route()
+    public static function register($method, $uri, $callback)
     {
-        $uri = $_SERVER['REQUEST_URI'];
+        switch ($method) {
+            case HTTP\Method::GET:
+                self::$get[$uri] = $callback;
+                break;
 
-        $request_name = strtolower($_SERVER['REQUEST_METHOD']);
-
-        if (isset(self::${$request_name}[$uri]))
-            echo self::${$request_name}[$uri]($uri);
-
-        else echo '404';
+            case HTTP\Method::POST:
+                self::$post[$uri] = $callback;
+                break;
+        }
     }
 
     /**
-     * Takes the given uri and operation and adds them to the $get array, with
-     * the uri as the key and the operation as the value.
+     * Checks that the Router has a route whose request method and URI match
+     * the given $method and $uri, respectively.
      *
-     * @NOTE This and post() could probably be wrappers for a single function
-     * so that we don't have to keep rewriting the same logic twice (or more
-     * if we have other types of request functions).
+     * @param  integer  $method The request method of the route.
+     * @param  string   $uri    The URI of the route.
      *
-     * @param   string      $uri        The URI to respond to.
-     * @param   callable    $operation  The operation to perform.
-     *
-     * @return  Route   A new Route object.
+     * @return boolean  True if the route exists, false otherwise.
      */
-    public static function get(string $uri, callable $operation)
+    public static function has($method, $uri)
     {
-        $route = new Route($uri, $operation);
+        switch ($method) {
+            case HTTP\Method::GET:
+                return isset(self::$get[$uri]);
 
-        self::$get[$uri] = $route;
-
-        return $route;
+            case HTTP\Method::POST:
+                return isset(self::$post[$uri]);
+        }
     }
 
     /**
-     * Takes the given uri and operation and adds them to the $post array,
-     * with the uri as the key and the operation as the value.
+     * Call the route (if it is registered) that corresponds to the given
+     * request method string and URI.
      *
-     * @param   string   $uri       The URI to respond to.
-     * @param   callable $operation The operation to perform.
+     * @param  string   $method_string The request method string.
+     * @param  string   $uri           The URI.
      *
-     * @return  Route   A new Route object.
+     * @return mixed    What is returned by the route.
      */
-    public static function post(string $uri, callable $operation)
+    public static function route($method_string, $uri)
     {
-        $route = new Route($uri, $operation);
+        switch ($method_string) {
+            case "GET":
+                return self::$get[$uri]();
 
-        self::$post[$uri] = $route;
-
-        return $route;
+            case "POST":
+                return self::$post[$uri]();
+        }
     }
 }
