@@ -5,37 +5,19 @@ namespace Mustache;
 class Mustache
 {
     /**
-     * Renders the template with the given name with the given data.
+     * Renders the $template_string with the given name with the given $data.
      *
-     * @param  string $template
+     * @param  string $template_string
      * @param  array  $data
      * @return string
      */
-    public function render($template, $data)
+    public static function render($template, $data)
     {
-        /*
-        @HACK This is has a hardcoded document root, which is problematic for
-        deployment later, but sufficient for our current purposes.
+        $tokens = self::tokenize($template);
 
-        Also, we should probably take into account that not every template is
-        going to be located in the templates/ directory. Some are going to be
-        located in sub-directories and we should figure out how to parse the
-        template name in such a manner as to allow for indexing into sub-
-        directories.
+        $syntax_tree = self::parse($tokens);
 
-        I'm feeling like we should use the '.' notation that Laravel uses for
-        referencing it's Blade templates. Mostly because it's just so simple
-        and familiar (and we don't have to worry about dealing with slashes).
-        */
-        $path = "/var/www/templates/{$template}.tpl";
-
-        $contents = file_get_contents($path);
-
-        $tokens = $this->tokenize($contents);
-
-        $syntax_tree = $this->parse($tokens);
-
-        return $this->compile($syntax_tree, $data);
+        return self::compile($syntax_tree, $data);
     }
 
     /**
@@ -45,7 +27,7 @@ class Mustache
      * @param  string $contents
      * @return array
      */
-    private function tokenize($contents)
+    private static function tokenize($contents)
     {
 
         /*
@@ -174,7 +156,7 @@ class Mustache
      * @param  array  $tokens
      * @return array
      */
-    private function parse($tokens)
+    private static function parse($tokens)
     {
         $syntax_tree = [];
         $section = null;
@@ -199,7 +181,7 @@ class Mustache
             else if ($token['type'] === 'tag_section_end' &&
                      $token['name'] === $section)
             {
-                $syntax_tree[$section]['nodes'] = $this->parse(
+                $syntax_tree[$section]['nodes'] = self::parse(
                                             $syntax_tree[$section]['nodes']
                                         );
 
@@ -227,7 +209,7 @@ class Mustache
      * @param  array  $data
      * @return string
      */
-    private function compile($syntax_tree, $data)
+    private static function compile($syntax_tree, $data)
     {
         $segments = [];
 
@@ -244,10 +226,10 @@ class Mustache
                 // they cannot be combined into a single boolean expression
                 // due to the nature of `$data[$key] ?? false`
                 if ($node['inverted'] && !($data[$key] ?? false))
-                    $segments[] = $this->compile($node['nodes'], $data);
+                    $segments[] = self::compile($node['nodes'], $data);
 
                 else if ($data[$key] ?? false)
-                    $segments[] = $this->compile($node['nodes'], $data);
+                    $segments[] = self::compile($node['nodes'], $data);
             }
 
             else if (is_numeric($key)) {
@@ -255,10 +237,13 @@ class Mustache
                     $segments[] = $node['segment'];
 
                 else if ($node['type'] === 'tag_partial')
-                    $segments[] = $this->render($node['name'], $data);
+                    $segments[] = self::render($node['name'], $data);
+
+                else if ($node['type'] === 'tag_unescaped')
+                    $segments[] = $data[$node['name']] ?? '';
 
                 else if ($node['type'] !== 'tag_comment')
-                    $segments[] = $data[$node['name']] ?? '';
+                    $segments[] = htmlspecialchars($data[$node['name']] ?? '');
             }
         }
 
