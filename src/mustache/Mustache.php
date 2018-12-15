@@ -244,8 +244,13 @@ class Mustache
                 if ($node['type'] === 'text')
                     $segments[] = $node['segment'];
 
-                elseif ($node['type'] === 'tag_partial')
-                    $segments[] = self::render($node['name'], $data);
+                elseif ($node['type'] === 'tag_partial') {
+                    $contents = file_get_contents(
+                        $_SERVER['DOCUMENT_ROOT']."/../templates/{$node['name']}.tpl"
+                    );
+
+                    $segments[] = self::render($contents, $data);
+                }
 
                 elseif ($node['type'] === 'tag_unescaped')
                     $segments[] = $data[$node['name']] ?? '';
