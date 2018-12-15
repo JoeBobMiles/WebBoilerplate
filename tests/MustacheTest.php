@@ -355,4 +355,22 @@ class MustacheTest extends TestCase
 
         $this->assertEquals("", Mustache::render($template, []));
     }
+
+    public function testPartialTagIncludesSpecifiedTemplateFile()
+    {
+        $message1 = "Hello World!";
+        $message2 = "Goodbye World!";
+
+        file_put_contents(
+            $_SERVER['DOCUMENT_ROOT']."../templates/test.tpl",
+            $message2
+        );
+
+        $template = "{$message1} {{>example_partial}}";
+
+        $this->assertEquals(
+            "{$message1} {$message2}",
+            Mustache::render($template, []);
+        );
+    }
 }
