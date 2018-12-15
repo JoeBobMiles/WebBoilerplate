@@ -2,15 +2,13 @@
 
 require_once '../bootstrap/bootstrap.php';
 
-/*
-TODO:
-    1. Views
+/**
+ * @todo Need to create a way to generate views more elegantly. Probably do
+ * something with the PSRs HTTP message specifications.
  */
 
 echo '<pre>';
-// var_dump($_SERVER);
 
-use HTTP;
 use Router\Router;
 use Mustache\Mustache;
 
@@ -18,9 +16,8 @@ use Mustache\Mustache;
 Let's render our example Mustache template with some example Mustache data!
  */
 Router::register(HTTP\Method::GET, '/', function () {
-    return (new Mustache)
-    ->render(
-        'example',
+    return Mustache::render(
+        file_get_contents($_SERVER['DOCUMENT_ROOT']."/../templates/example.tpl"),
         [
             'name' => 'John Doe',
             'value' => 1000000,
