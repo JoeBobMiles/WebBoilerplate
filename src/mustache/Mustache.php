@@ -5,7 +5,7 @@ namespace Mustache;
 class Mustache
 {
     /**
-     * Renders the $template_string with the given name with the given $data.
+     * Renders the given $template_string with the given $data.
      *
      * @param  string $template_string
      * @param  array  $data
@@ -19,6 +19,13 @@ class Mustache
         $syntax_tree = self::parse($tokens);
 
         return self::compile($syntax_tree, $data);
+    }
+
+    public static function getTemplate($template_name)
+    {
+        return file_get_contents(
+            $_SERVER['DOCUMENT_ROOT']."/../templates/{$template_name}.tpl"
+        );
     }
 
     /**
@@ -245,9 +252,7 @@ class Mustache
                     $segments[] = $node['segment'];
 
                 elseif ($node['type'] === 'tag_partial') {
-                    $contents = file_get_contents(
-                        $_SERVER['DOCUMENT_ROOT']."/../templates/{$node['name']}.tpl"
-                    );
+                    $contents = self::getTemplate($node['name']);
 
                     $segments[] = self::render($contents, $data);
                 }
