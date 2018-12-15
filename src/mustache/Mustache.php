@@ -222,18 +222,21 @@ class Mustache
                 if ($node['inverted'] && !($data[$key] ?? false))
                     $segments[] = self::compile($node['nodes'], $data);
 
-                elseif ($data[$key] ?? false) {
+                elseif (!$node['inverted'] && ($data[$key] ?? false)) {
                     if (is_array($data[$key])) {
                         $subcontext_keys = array_keys($data[$key]);
 
                         if (is_numeric($subcontext_keys[0])) {
                             foreach ($data[$key] as $context)
                                 $segments[] = self::compile($node['nodes'], $context);
+
                         } else
                             $segments[] = self::compile($node['nodes'], $data[$key]);
                     }
+
                     elseif (is_callable($data[$key]))
                         $segments[] = call_user_func($data[$key], self::reconstructTemplate($node['nodes']), $data);
+
                     else
                         $segments[] = self::compile($node['nodes'], $data[$key]);
                 }

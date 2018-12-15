@@ -289,16 +289,6 @@ class MustacheTest extends TestCase
             }
         ];
 
-        /**
-         * @todo Do to some poor assumptions during the time when we wrote the
-         * Mustache renderer, we are going to need to overhaul it so that we can
-         * satisfy this test.
-         *
-         * The problem we have run into is that we need to pass the PLAIN TEXT
-         * contents of a section tag to the closure we have been given. However,
-         * by thte time we get around to doing that, we no longer have the plain
-         * text contents, but rather a symbolic representation of it.
-         */
         $this->assertEquals(
             "<b>{$message}</b>",
             Mustache::render($template, $data)
@@ -314,7 +304,11 @@ class MustacheTest extends TestCase
      */
     public function testInvertedSectionContentsDoNotRenderWhenVariablePresent()
     {
+        $template = "{{^section}}Hello World!{{/section}}";
 
+        $data = [ 'section' => true ];
+
+        $this->assertEquals("", Mustache::render($template, $data));
     }
 
     /**
@@ -325,7 +319,11 @@ class MustacheTest extends TestCase
      */
     public function testInvertedSectionContentsRenderWhenVariableIsAbsent()
     {
+        $message = "Hello World!";
 
+        $template = "{{^section}}{$message}{{/section}}";
+
+        $this->assertEquals($message, Mustache::render($template, []));
     }
 
     /**
@@ -337,7 +335,13 @@ class MustacheTest extends TestCase
      */
     public function testInvertedSectionContentsRenderWhenVariableIsFalsy()
     {
+        $message = "Hello World!";
 
+        $template = "{{^section}}{$message}{{/section}}";
+
+        $data = [ 'section' => false ];
+
+        $this->assertEquals($message, Mustache::render($template, $data));
     }
 
     /**
