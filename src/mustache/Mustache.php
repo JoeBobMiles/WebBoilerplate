@@ -9,6 +9,7 @@ class Mustache
      *
      * @param  string $template_string
      * @param  array  $data
+     *
      * @return string
      */
     public static function render($template, $data)
@@ -25,6 +26,7 @@ class Mustache
      * and creates an array of tokens from the split segments.
      *
      * @param  string $contents
+     *
      * @return array
      */
     private static function tokenize($contents)
@@ -71,7 +73,7 @@ class Mustache
             /*
             Match the section begin tag ({{#...}}).
              */
-            else if (preg_match('/{{#(.+?)}}/', $segment, $match)) {
+            elseif (preg_match('/{{#(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_section_begin',
                     'name' => $match[1],
@@ -82,7 +84,7 @@ class Mustache
             /*
             Match the inverted section tag ({{^...}})
              */
-            else if (preg_match('/{{\^(.+?)}}/', $segment, $match)) {
+            elseif (preg_match('/{{\^(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_inverted_begin',
                     'name' => $match[1],
@@ -93,7 +95,7 @@ class Mustache
             /*
             Match the end section tag ({{/...}})
              */
-            else if (preg_match('/{{\/(.+?)}}/', $segment, $match)) {
+            elseif (preg_match('/{{\/(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_section_end',
                     'name' => $match[1],
@@ -104,7 +106,7 @@ class Mustache
             /*
             Match the comment tag ({{!...}})
              */
-            else if (preg_match('/{{!.+?}}/', $segment)) {
+            elseif (preg_match('/{{!.+?}}/', $segment)) {
                 $tokens[$key] = [
                     'type' => 'tag_comment',
                     'segment' => $segment
@@ -116,7 +118,7 @@ class Mustache
             Incidentally, this also treats the 'malformed' {{&...}}} as a valid
             unescaped tag.
              */
-            else if (preg_match('/{{[{&](.+?)}?}}/', $segment, $match)) {
+            elseif (preg_match('/{{[{&](.+?)}?}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_unescaped',
                     'name' => $match[1],
@@ -127,7 +129,7 @@ class Mustache
             /*
             Match the escaped tag.
              */
-            else if (preg_match('/{{(.+?)}}/', $segment, $match)) {
+            elseif (preg_match('/{{(.+?)}}/', $segment, $match)) {
                 $tokens[$key] = [
                     'type' => 'tag_escaped',
                     'name' => $match[1],
@@ -154,6 +156,7 @@ class Mustache
      * Parses the given array of tokens into a syntax tree.
      *
      * @param  array  $tokens
+     *
      * @return array
      */
     private static function parse($tokens)
@@ -170,7 +173,7 @@ class Mustache
                 continue;
             }
 
-            else if ($token['type'] === 'tag_inverted_begin' && !$section) {
+            elseif ($token['type'] === 'tag_inverted_begin' && !$section) {
                 $section = $token['name'];
                 $syntax_tree[$section]['inverted'] = true;
                 $syntax_tree[$section]['nodes'] = [];
@@ -178,8 +181,8 @@ class Mustache
                 continue;
             }
 
-            else if ($token['type'] === 'tag_section_end' &&
-                     $token['name'] === $section)
+            elseif ($token['type'] === 'tag_section_end'
+                    && $token['name'] === $section)
             {
                 $syntax_tree[$section]['nodes'] = self::parse(
                                             $syntax_tree[$section]['nodes']
@@ -207,46 +210,66 @@ class Mustache
      *
      * @param  array  $syntax_tree
      * @param  array  $data
+     *
      * @return string
      */
     private static function compile($syntax_tree, $data)
     {
         $segments = [];
 
-        /*
-        @TODO We need to implement the ability to call a callable $data value,
-        as well as implement interating over interable $data values, and
-        navigating backwards through contexts (also need to implement
-        contexts).
-         */
-
         foreach ($syntax_tree as $key => $node) {
             if (is_string($key)) {
-                // @NOTE Resist the urge to combine the if and else-if,
-                // they cannot be combined into a single boolean expression
-                // due to the nature of `$data[$key] ?? false`
                 if ($node['inverted'] && !($data[$key] ?? false))
                     $segments[] = self::compile($node['nodes'], $data);
 
-                else if ($data[$key] ?? false)
-                    $segments[] = self::compile($node['nodes'], $data);
-            }
+                elseif ($data[$key] ?? false) {
+                    if (is_array($data[$key])) {
+                        $subcontext_keys = array_keys($data[$key]);
 
-            else if (is_numeric($key)) {
+                        if (is_numeric($subcontext_keys[0])) {
+                            foreach ($data[$key] as $context)
+                                $segments[] = self::compile($node['nodes'], $context);
+                        } else
+                            $segments[] = self::compile($node['nodes'], $data[$key]);
+                    }
+                    elseif (is_callable($data[$key]))
+                        $segments[] = call_user_func($data[$key], self::reconstructTemplate($node['nodes']), $data);
+                    else
+                        $segments[] = self::compile($node['nodes'], $data[$key]);
+                }
+            } elseif (is_numeric($key)) {
                 if ($node['type'] === 'text')
                     $segments[] = $node['segment'];
 
-                else if ($node['type'] === 'tag_partial')
+                elseif ($node['type'] === 'tag_partial')
                     $segments[] = self::render($node['name'], $data);
 
-                else if ($node['type'] === 'tag_unescaped')
+                elseif ($node['type'] === 'tag_unescaped')
                     $segments[] = $data[$node['name']] ?? '';
 
-                else if ($node['type'] !== 'tag_comment')
+                elseif ($node['type'] !== 'tag_comment')
                     $segments[] = htmlspecialchars($data[$node['name']] ?? '');
             }
         }
 
         return implode($segments);
+    }
+
+    /**
+     * Allows us to reconstruct the syntax tree into the text that it was
+     * derived from self::parse().
+     *
+     * @param  string $syntax_tree A syntax tree returned from self::parse()
+     *
+     * @return string
+     */
+    private static function reconstructTemplate($syntax_tree)
+    {
+        $string = "";
+
+        foreach ($syntax_tree as $node)
+            $string .= $node['segment'];
+
+        return $string;
     }
 }

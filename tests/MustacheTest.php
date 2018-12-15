@@ -119,7 +119,11 @@ class MustacheTest extends TestCase
      */
     public function testSectionTagsDoNotRenderWhenVariablePresent()
     {
+        $template = "{{#section}}{{/section}}";
 
+        $data = [ 'section' => true ];
+
+        $this->assertEquals("", Mustache::render($template, $data));
     }
 
     /**
@@ -130,7 +134,9 @@ class MustacheTest extends TestCase
      */
     public function testSectionTagsDoNotRenderWhenVariableAbsent()
     {
+        $template = "{{#section}}{{/section}}";
 
+        $this->assertEquals("", Mustache::render($template, []));
     }
 
     /**
@@ -141,7 +147,11 @@ class MustacheTest extends TestCase
      */
     public function testSectionTagsDoNotRenderWhenVariableIsFalsy()
     {
+        $template = "{{#section}}{{/section}}";
 
+        $data = [ 'section' => false ];
+
+        $this->assertEquals("", Mustache::render($template, $data));
     }
 
     /**
@@ -152,7 +162,13 @@ class MustacheTest extends TestCase
      */
     public function testSectionContentsRenderWhenVariablePresent()
     {
+        $message = "Hello World!";
 
+        $template = "{{#section}}{$message}{{/section}}";
+
+        $data = [ 'section' => true ];
+
+        $this->assertEquals($message, Mustache::render($template, $data));
     }
 
     /**
@@ -164,7 +180,11 @@ class MustacheTest extends TestCase
      */
     public function testSectionContentsDoNotRenderWhenVariableAbsent()
     {
+        $message = "Hello World!";
 
+        $template = "{{#section}}{$message}{{/section}}";
+
+        $this->assertEquals("", Mustache::render($template, []));
     }
 
     /**
@@ -175,7 +195,13 @@ class MustacheTest extends TestCase
      */
     public function testSectionContentsDoNotRenderWhenVariableFalsy()
     {
+        $message = "Hello World!";
 
+        $template = "{{#section}}{$message}{{/section}}";
+
+        $data = [ 'section' => false ];
+
+        $this->assertEquals("", Mustache::render($template, $data));
     }
 
     /**
@@ -184,9 +210,18 @@ class MustacheTest extends TestCase
      *
      * @return void
      */
-    public function testSectionUsesVariableValueAsContext()
+    public function testSectionOnlyUsesVariableValueAsContext()
     {
+        $template = "{{#section}}{{incontext}}{{outofcontext}}{{/section}}";
 
+        $message = "Hello World!";
+
+        $data = [
+            'outofcontext' => "Goodbye World!",
+            'section' => [ 'incontext' => $message ]
+        ];
+
+        $this->assertEquals($message, Mustache::render($template, $data));
     }
 
     /**
@@ -197,18 +232,20 @@ class MustacheTest extends TestCase
      */
     public function testSectionCanIterateOverNonEmptyLists()
     {
+        $template = "{{#section}}{{name}}!{{/section}}";
 
-    }
+        $data = [
+            'section' => [
+                [ 'name' => 'Adam' ],
+                [ 'name' => 'Adam' ],
+                [ 'name' => 'Adam' ]
+            ]
+        ];
 
-    /**
-     * Check that when the variable is a Closure that the section still
-     * renders.
-     *
-     * @return void
-     */
-    public function testSectionRendersWhenVariableIsClosure()
-    {
-
+        $this->assertEquals(
+            "Adam!Adam!Adam!",
+            Mustache::render($template, $data)
+        );
     }
 
     /**
@@ -220,7 +257,17 @@ class MustacheTest extends TestCase
      */
     public function testSectionPassesContentToClosureAndDisplaysReturnValue()
     {
+        $message = "Hello World!";
 
+        $template = "{{#section}}{{/section}}";
+
+        $data = [
+            'section' => function () use ($message) {
+                return $message;
+            }
+        ];
+
+        $this->assertEquals($message, Mustache::render($template, $data));
     }
 
     /**
@@ -231,7 +278,31 @@ class MustacheTest extends TestCase
      */
     public function testSectionPassesParentContextToClosure()
     {
+        $message = "Hello World!";
 
+        $template = "{{#section}}{{message}}{{/section}}";
+
+        $data = [
+            'message' => $message,
+            'section' => function ($content, $context) {
+                return '<b>'.Mustache::render($content, $context).'</b>';
+            }
+        ];
+
+        /**
+         * @todo Do to some poor assumptions during the time when we wrote the
+         * Mustache renderer, we are going to need to overhaul it so that we can
+         * satisfy this test.
+         *
+         * The problem we have run into is that we need to pass the PLAIN TEXT
+         * contents of a section tag to the closure we have been given. However,
+         * by thte time we get around to doing that, we no longer have the plain
+         * text contents, but rather a symbolic representation of it.
+         */
+        $this->assertEquals(
+            "<b>{$message}</b>",
+            Mustache::render($template, $data)
+        );
     }
 
     /**
