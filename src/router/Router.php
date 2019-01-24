@@ -90,11 +90,10 @@ class Router
         $method = HTTP\Method::convert($method_string);
 
         /*
-        It may not be prudent to use false as an indication of error
-        here. Some routes may opt to return false to indicate error
-        themselves, and the ambiguity between the route not being
-        found and the route returning false could lead to issues down
-        the line.
+        It may not be prudent to use false as an indication of error here. Some
+        routes may opt to return false to indicate error themselves, and the
+        ambiguity between the route not being found and the route returning
+        false could lead to issues down the line.
 
         What may be more ideal is returning "Bad Request" or "Not Found"
         instead.

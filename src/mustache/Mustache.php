@@ -272,7 +272,7 @@ class Mustache
      * Allows us to reconstruct the syntax tree into the text that it was
      * derived from self::parse().
      *
-     * @param  string $syntax_tree A syntax tree returned from self::parse()
+     * @param  mixed[]  $syntax_tree    A syntax tree returned from self::parse()
      *
      * @return string
      */
